@@ -9,8 +9,8 @@ import gc
 import micropython
 
 PIN_NUM = 22
-NUM_LEDS = const(283)
-STEP = 8
+NUM_LEDS = 8
+STEP = 1
 
 chance = 0
 
@@ -58,94 +58,3 @@ def pixels_set(i, color):
 def pixels_fill(color):
     for i in range(len(ar)):
         pixels_set(i, color) 
-
-
-@micropython.native
-async def starlight(lcd, next_button_pressed):
-
-    numberofleds = NUM_LEDS
-    prevchance = 0
-    starttime = utime.ticks_ms()
-    ledslist = [] # 0 to 128
-    blueorwhite = [] # 1 or 2
-
-    for i in range(numberofleds):
-        ledslist.append(0)
-        blueorwhite.append(1)
-    
-    while not next_button_pressed.is_set():
-        global chance
-
-        chance = max(1000-((utime.ticks_diff(utime.ticks_ms(),starttime))//300),600)
-        if chance != prevchance:
-            lcd.print_lcd(f"STARLIGHT {(1000-chance)//4}%")
-            prevchance = chance
-
-        print(chance)
-        
-        if random.randint(1,1000) > chance:
-    
-            num1 = random.randint(0,(numberofleds-1))
-            if ledslist[num1] == 0: 
-                ledslist[num1] = 318
-                num2 = random.randint(1,2)
-                blueorwhite[num1] = num2
-            else:
-                pass
-            
-        for i in range(numberofleds):
-            
-            if ledslist[i] > 254: # fade in if bigger than 254
-                colour =  4 * abs(ledslist[i]-318)
-                if blueorwhite[i] == 1:
-                    pixels_set(i, ((colour,colour,colour)))
-                else:
-                    pixels_set(i, ((0,colour,colour)))
-                    
-            else: # else fade out if not bigger than 254 
-                if blueorwhite[i] == 1: # fade out
-                    pixels_set(i, ((ledslist[i],ledslist[i],ledslist[i])))
-                else:
-                    pixels_set(i, ((0,ledslist[i],ledslist[i])))
-                    
-        await pixels_show()
-                
-        for i in range(numberofleds):
-            if ledslist[i] > STEP:
-                ledslist[i] =  ledslist[i] - STEP
-            if ledslist[i] <= STEP:
-                ledslist[i] = 0
-
-        await uasyncio.sleep(0.01)
-
-    # while True:
-    lcd.print_lcd(f"STARLIGHT FADEOUT")
-    while [x for x in ledslist if x > 0]:  # while any led is still lit
-
-        for i in range(numberofleds):
-            
-            if ledslist[i] > 254: # fade in if bigger than 254
-                colour =  4 * abs(ledslist[i]-318)
-                if blueorwhite[i] == 1:
-                    pixels_set(i, ((colour,colour,colour)))
-                else:
-                    pixels_set(i, ((0,colour,colour)))
-
-            else: #if not bigger than 254 
-                if blueorwhite[i] == 1: # fade out
-                    pixels_set(i, ((ledslist[i],ledslist[i],ledslist[i])))
-                else:
-                    pixels_set(i, ((0,ledslist[i],ledslist[i])))
-                    
-        await pixels_show()
-                
-        for i in range(numberofleds):
-            if ledslist[i] > STEP:
-                ledslist[i] =  ledslist[i] - STEP
-            if ledslist[i] <= STEP:
-                ledslist[i] = 0
-            
-    lcd.print_lcd(f"ALL OFF")
-
-    pixels_fill((0,0,0))
-    await pixels_show()

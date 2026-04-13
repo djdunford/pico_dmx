@@ -25,7 +25,6 @@ except OSError:
 # Get Our Configuration
 dmxrx_deviceaddress = config.dmx_address  # Our device Base DMX Address
 dmxrx_devicechannels = config.dmx_channels  # How many channels we care about
-ws2812_numleds = config.ws2812_numleds
 
 # Environment Setup
 gc.threshold(16384)  # Run Garbage collection everytime 16KB is allocated
@@ -47,7 +46,9 @@ def update(grgbw_list):
 def dmxstatuschange(status):
     if status == 0: # We are offline & timed-out
         print("Turning off LED Output")
-        pixels.clear()
+        ws2812.pixels_fill((0,0,0))
+        await ws2812.pixels_show()
+        
 
 
 # Configuring Modules - DMX Receiver
@@ -55,9 +56,21 @@ dmx = dmx512_rx.DMX(dmxrx_deviceaddress, dmxrx_devicechannels, 1)
 dmx.set_updatefunction(update)
 # dmx.set_statusfunction(dmxstatuschange)  # Not needed with full rainbow fallback
 
+
 print("INFO: Starting Main Loop")
 
+
 async def main():
+    
+    ws2812.pixels_fill((0,0,0))
+    await ws2812.pixels_show()
+    
+    ws2812.pixels_fill((0,255,0))
+    ws2812.pixels_set(4,(0,0,255))
+    ws2812.pixels_set(6,(0,0,255))
+
+    await ws2812.pixels_show()
+    
     while True:
         dmx.loop()
 
